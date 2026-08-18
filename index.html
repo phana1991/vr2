@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Gravity AR Lab — ตรวจจับการปล่อยวัตถุ</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div><div class="brand">🧪 Gravity AR Lab</div><div class="subtitle">ตรวจจับการปล่อยวัตถุจากมือและวัดการตกแบบ Real-time</div></div>
+  <div id="secureBadge" class="badge">รอเปิดกล้อง</div>
+</header>
+<main class="layout">
+  <section class="card camera-card">
+    <div class="video-wrap">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div id="loading" class="overlay-msg">กด “เปิดกล้อง” เพื่อเริ่ม</div>
+      <div class="hud">
+        <div><span>สถานะ</span><b id="status">ยังไม่เริ่ม</b></div>
+        <div><span>ความเร็ว</span><b id="speed">0.00 m/s</b></div>
+        <div><span>ระยะตก</span><b id="distance">0.00 m</b></div>
+        <div><span>เวลา</span><b id="elapsed">0.000 s</b></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="startBtn" class="primary">📷 เปิดกล้อง</button>
+      <button id="calibrateBtn">📐 ตั้งพื้น</button>
+      <button id="recordBtn" disabled>⏺ เริ่มตรวจจับ</button>
+      <button id="stopBtn" disabled>⏹ หยุด</button>
+      <button id="resetBtn">↺ รีเซ็ต</button>
+    </div>
+    <div id="message" class="message">เคล็ดลับ: ใช้วัตถุสี/รูปทรงชัดเจนและให้พื้นอยู่ในภาพตลอดเวลา</div>
+  </section>
+
+  <aside class="card settings">
+    <h2>ตั้งค่าการทดลอง</h2>
+    <label>ความสูงมือขณะปล่อย (เมตร)
+      <input id="heightInput" type="number" min="0.2" max="5" step="0.01" value="1.20">
+    </label>
+    <label>เกณฑ์แยกจากมือ (พิกเซล)
+      <input id="separationInput" type="number" min="5" max="120" step="1" value="24">
+    </label>
+    <label>เกณฑ์การเคลื่อนที่ลง (พิกเซล/เฟรม)
+      <input id="motionInput" type="number" min="1" max="80" step="1" value="4">
+    </label>
+    <div class="info"><b>ระบบทำงานอย่างไร</b>
+      <ol>
+        <li>ตรวจจับมือของนักเรียน</li>
+        <li>ตรวจจับวัตถุที่เคลื่อนออกจากมือ</li>
+        <li>ตรวจพบการปล่อยเมื่อวัตถุแยกจากมือและเคลื่อนลง</li>
+        <li>ติดตามตำแหน่งทุกเฟรมจนถึงพื้น</li>
+        <li>คำนวณเวลา ระยะ และความเร็วโดยประมาณ</li>
+      </ol>
+    </div>
+    <div class="warning">⚠️ ความเร็วจากกล้องเป็นค่าประมาณ เพราะภาพเป็น 2 มิติ ควรใช้มือถือแนวตั้งและกล้องอยู่นิ่ง</div>
+  </aside>
+
+  <section class="card results">
+    <div class="section-head"><h2>ผลการทดลองครั้งปัจจุบัน</h2><div class="actions"><button id="downloadBtn">⬇ ดาวน์โหลด CSV</button><button id="saveCurrentBtn" disabled>💾 บันทึกครั้งนี้</button></div></div>
+    <div class="metrics">
+      <div><span>ความเร็วสูงสุด</span><strong id="maxSpeed">0.00</strong><small>m/s</small></div>
+      <div><span>เวลาตก</span><strong id="fallTime">0.000</strong><small>s</small></div>
+      <div><span>ระยะทาง</span><strong id="fallDistance">0.00</strong><small>m</small></div>
+      <div><span>สถานะการตรวจจับ</span><strong id="detectState">รอ</strong><small></small></div>
+    </div>
+    <div class="chart-wrap"><canvas id="chart"></canvas></div>
+    <div class="table-wrap"><table><thead><tr><th>รอบ</th><th>วัตถุ</th><th>เวลาตก (s)</th><th>ระยะทาง (m)</th><th>ความเร็วสูงสุด (m/s)</th></tr></thead><tbody id="dataBody"></tbody></table></div>
+  </section>
+
+  <section class="card history">
+    <div class="section-head">
+      <div><h2>ประวัติการทดลองทั้งหมด</h2><p class="muted">บันทึก 1 รายการต่อ 1 รอบการทดลอง — ไม่แสดงข้อมูลทุกเฟรม</p></div>
+      <div class="actions"><button id="exportAllBtn">📊 ส่งออกทั้งหมด</button><button id="clearHistoryBtn" class="danger">🗑 ล้างประวัติ</button></div>
+    </div>
+    <div id="historySummary" class="history-summary"></div>
+    <div class="table-wrap"><table><thead><tr><th>ครั้ง</th><th>วันที่/เวลา</th><th>วัตถุ</th><th>เวลา (s)</th><th>ระยะ (m)</th><th>ความเร็วสูงสุด (m/s)</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
